@@ -35,6 +35,7 @@ public class Zedis {
             while (true){
                 List<Event> events = multiplexer.waitEvents();
                 for (Event event : events) {
+                    log.info("Operation: " + event.getOp());
                     if(event.getOp() == Operation.ACCEPT){
                         handleAccept(event, multiplexer);
                     }else if(event.getOp() == Operation.READ){
@@ -61,7 +62,7 @@ public class Zedis {
             clientChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
 
             // register client connect
-            multiplexer.monitor(new Event(serverChannel, Operation.ACCEPT));
+            multiplexer.monitor(new Event(clientChannel, Operation.READ));
         }
     }
 

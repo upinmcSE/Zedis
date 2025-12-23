@@ -9,8 +9,11 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class NioSelectorMultiplexer implements IOMultiplexer {
+    private static final Logger log = Logger.getLogger(NioSelectorMultiplexer.class.getName());
+
     private final Selector selector;
     private final int maxConnection;
 
@@ -37,13 +40,14 @@ public class NioSelectorMultiplexer implements IOMultiplexer {
 
     @Override
     public List<Event> waitEvents() throws IOException {
-        if(this.selector.select() == 0) return Collections.emptyList();
+        int selected = this.selector.select();
+        log.info("selected: " + selected);
+        if(selected == 0) return Collections.emptyList();
 
         Set<SelectionKey> selectedKeys = selector.selectedKeys();
         List<Event> genericEvents = new ArrayList<>(selectedKeys.size());
 
         Iterator<SelectionKey> it = selectedKeys.iterator();
-
         while (it.hasNext()) {
             SelectionKey key = it.next();
             SelectableChannel channel = key.channel();
