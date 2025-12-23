@@ -3,6 +3,7 @@ package io.upinmcSE.think;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 public class TcpServer {
@@ -26,18 +27,34 @@ public class TcpServer {
     }
 
     public static void handleConnection(Socket socket){
-        try(
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))
-        ){
-            char[] buffer = new char[1024];
-            in.read(buffer);
+       log.info("handleConnection ..." + socket.getRemoteSocketAddress());
+       try{
+           while (true){
+               String cmd = readCommand(socket);
+               writeResponse(cmd, socket);
+           }
+       }catch(IOException e){
+           log.warning(e.getMessage());
+       }
 
-            out.write("HTTP/1.1 200 OK\r\n\r\nBoThanhDzai|r\n");
-            out.flush();
-            log.info("Client disconnected !");
-        }catch (IOException e){
-            log.warning(e.getMessage());
+    }
+
+    private static String readCommand(Socket socket) throws IOException {
+        byte[] buf = new byte[1024];
+
+        InputStream inputStream = socket.getInputStream();
+
+        int n = inputStream.read(buf);
+
+        if (n == -1) {
+            throw new IOException("Connection closed by client");
         }
+        return new String(buf, 0, n, StandardCharsets.UTF_8);
+    }
+
+    private static void writeResponse(String cmd, Socket socket) throws IOException {
+        OutputStream outputStream = socket.getOutputStream();
+        outputStream.write(cmd.getBytes(StandardCharsets.UTF_8));
+        outputStream.flush();
     }
 }
