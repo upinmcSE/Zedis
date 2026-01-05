@@ -87,6 +87,8 @@ public class Zedis {
             String cmd = new String(data, 0, n, StandardCharsets.UTF_8);
 
             log.info("Command: " + cmd);
+
+            // call method  and response
             writeResponse(cmd, clientChannel);
         }
     }

@@ -1,8 +1,12 @@
 package io.upinmcSE.core.protocol;
 
+import io.upinmcSE.core.Command;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RespCodec {
@@ -73,7 +77,19 @@ public class RespCodec {
 
     // *2\r\n$5\r\nhello\r\n$5\r\nworld\r\n => {"hello", "world"}
     public DecodeResult readArray(byte[] data, int position) {
-        return null;
+        DecodeResult lenRes = readLength(data);
+        int length = (int) lenRes.getValue();
+        int currentPos = lenRes.getNextPos();
+
+        List<Object> res = new ArrayList<>(length);
+
+        for (int i = 0; i < length; i++) {
+            DecodeResult elem = decodeOne(data, currentPos);
+            res.add(elem.getValue());
+            currentPos = elem.getNextPos();
+        }
+
+        return new DecodeResult(res, currentPos);
     }
 
     public DecodeResult decodeOne(byte[] data, int pos){
@@ -157,5 +173,20 @@ public class RespCodec {
         }catch (Exception e){
             return RESP_NULL;
         }
+    }
+
+    public Command parseCommand(byte[] data){
+        Object result = decode(data);
+
+        Object[] res = (Object[]) result;
+
+        String[] tokens = new String[res.length];
+        for(int i = 0; i < res.length; i++){
+            tokens[i] = res[i].toString();
+        }
+
+        String[] args = Arrays.copyOfRange(tokens, 1, tokens.length);
+
+        return new Command(tokens[0], args);
     }
 }
